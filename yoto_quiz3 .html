@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>補助的地域地区 暗記フラッシュカード</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 90vh;
+        }
+        h1 {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        /* モード選択画面 */
+        #menu-screen {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .menu-btn {
+            background-color: #ffffff;
+            border: 2px solid #3498db;
+            color: #2980b9;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+            text-align: left;
+        }
+        .menu-btn:hover {
+            background-color: #3498db;
+            color: white;
+            transform: translateY(-2px);
+        }
+        /* クイズ画面 */
+        #quiz-screen {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+        }
+        .progress-bar {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        /* フラッシュカード本体 */
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 25px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+        .card-title-area {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        .card-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        .card-district {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #1e293b;
+        }
+        .card-content {
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #334155;
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        /* タップして表示する隠し要素のスタイル */
+        .hidden-text {
+            background-color: #cbd5e1;
+            color: #cbd5e1;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            user-select: none;
+            display: inline-block;
+            transition: background-color 0.2s, color 0.2s;
+            margin: 2px 2px;
+            text-align: center;
+        }
+        .hidden-text.revealed {
+            background-color: #fef3c7;
+            color: #dc2626; /* 赤字 */
+            font-weight: bold;
+        }
+        .hidden-block {
+            background-color: #cbd5e1;
+            color: #cbd5e1;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 6px;
+            user-select: none;
+            display: block;
+            margin: 8px 0;
+            text-align: center;
+            letter-spacing: 1px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .hidden-block.revealed {
+            background-color: #fef3c7;
+            color: #dc2626; /* 赤字項目 */
+            font-weight: bold;
+            text-align: left;
+            letter-spacing: normal;
+        }
+        .instruction-hint {
+            font-size: 0.85rem;
+            color: #d97706;
+            background-color: #fef3c7;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        /* 仕分けボタンエリア */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .swipe-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: transform 0.1s;
+        }
+        .swipe-btn:active {
+            transform: scale(0.97);
+        }
+        .btn-left {
+            background-color: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #f87171;
+        }
+        .btn-right {
+            background-color: #dcfce7;
+            color: #16a34a;
+            border: 1px solid #4ade80;
+        }
+        /* 結果画面 */
+        #result-screen {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        #result-screen h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .result-stats {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            line-height: 1.8;
+        }
+        .back-menu-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .retry-btn {
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>補助的地域地区 暗記アプリ</h1>
+
+    <!-- メニュー画面 -->
+    <div id="menu-screen">
+        <p style="color: #64748b; font-size: 0.95rem; text-align: center; margin-bottom: 10px;">学習するモードを選んでください</p>
+        <button class="menu-btn" onclick="startQuiz(1)">
+            📖 モード1: 補助的地域地区（説明）<br>
+            <span style="font-size: 0.85rem; font-weight: normal; color: #64748b;">A（地区名）を表示 ＋ B（解説内の赤字）をタップして確認</span>
+        </button>
+        <button class="menu-btn" onclick="startQuiz(2)">
+            📝 モード2: 補助的地域地区（定める事項）<br>
+            <span style="font-size: 0.85rem; font-weight: normal; color: #64748b;">A（地区名）を表示 ＋ C（定める事項の赤字）をタップして確認</span>
+        </button>
+    </div>
+
+    <!-- クイズ画面 -->
+    <div id="quiz-screen">
+        <div class="progress-bar">
+            <span id="progress-text">問題 1 / 10</span>
+            <button onclick="backToMenu()" style="background:none; border:none; color:#3498db; cursor:pointer; font-weight:bold;">メニューに戻る</button>
+        </div>
+
+        <div class="card" id="flashcard">
+            <div>
+                <div class="card-title-area">
+                    <div class="card-label">地区名 (A)</div>
+                    <div class="card-district" id="card-district">特別用途地区</div>
+                </div>
+                <div class="instruction-hint" id="instruction-hint">💡 隠されている部分をすべてタップして確認してください</div>
+                <div class="card-content" id="card-content">
+                    <!-- 動的挿入 -->
+                </div>
+            </div>
+            
+            <div>
+                <div class="action-buttons">
+                    <button class="swipe-btn btn-left" onclick="answerCard('left')">❌ できなかった</button>
+                    <button class="swipe-btn btn-right" onclick="answerCard('right')">⭕ できた</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 結果画面 -->
+    <div id="result-screen">
+        <h2>🎉 お疲れ様でした！</h2>
+        <div class="result-stats" id="result-stats"></div>
+        <button class="retry-btn" id="retry-btn" onclick="retryWrongItems()">❌ 間違えた問題だけを復習する</button><br>
+        <button class="back-menu-btn" onclick="backToMenu()">メニューに戻る</button>
+    </div>
+
+<script>
+const quizData = [
+    {
+        district: "特別用途地区",
+        b_html: "特別用途地区内では、条例で用途地域に定める建築物の用途制限を<span class=\"hidden-text\" onclick=\"reveal(this)\">加重または緩和</span>することができる",
+        c_list: []
+    },
+    {
+        district: "高度地区",
+        b_html: "用途地域内において市街地の環境を維持し、または土地利用の増進を図るため、建築物の<span class=\"hidden-text\" onclick=\"reveal(this)\">高さ</span>の<span class=\"hidden-text\" onclick=\"reveal(this)\">最高限度または最低限度</span>を定める地区",
+        c_list: []
+    },
+    {
+        district: "高度利用地区",
+        b_html: "", 
+        c_list: [
+            "容積率の最高限度、最低限度",
+            "建蔽率の最高限度",
+            "建築面積の最低限度",
+            "壁面の位置の制限"
+        ]
+    },
+    {
+        district: "高層住居誘導地区",
+        b_html: "住居と住居以外の用途を適正に配分し、利便性の高い高層住宅の建設を誘導するため、一定の用途地域（<span class=\"hidden-text\" onclick=\"reveal(this)\">第一種住居地域</span>、<span class=\"hidden-text\" onclick=\"reveal(this)\">第二種住居地域</span>、<span class=\"hidden-text\" onclick=\"reveal(this)\">準住居地域</span>、<span class=\"hidden-text\" onclick=\"reveal(this)\">近隣商業地域</span>、<span class=\"hidden-text\" onclick=\"reveal(this)\">準工業地域</span>）で、建築物の容積率が<span class=\"hidden-text\" onclick=\"reveal(this)\">40/10</span>または<span class=\"hidden-text\" onclick=\"reveal(this)\">50/10</span>と定められた地域において、以下を定める地区",
+        c_list: [
+            "容積率の最高限度",
+            "建蔽率の最高限度",
+            "建築物の敷地面積の最低限度"
+        ]
+    },
+    {
+        district: "特例容積率適用地区",
+        b_html: "一定の用途地域（<span class=\"hidden-text\" onclick=\"reveal(this)\">第一種低層住居専用地域</span>・<span class=\"hidden-text\" onclick=\"reveal(this)\">第二種低層住居専用地域</span>・<span class=\"hidden-text\" onclick=\"reveal(this)\">田園住居地域</span>・<span class=\"hidden-text\" onclick=\"reveal(this)\">工業専用地域</span><b>以外</b>）内の適正な配置および規模の公共施設を備えた土地の区域において、建築物の容積率の限度からみて<span class=\"hidden-text\" onclick=\"reveal(this)\">未利用</span>となっている建築物の容積の活用を促進して土地の高度利用を図るため定める地区",
+        c_list: []
+    },
+    {
+        district: "居住環境向上用途誘導地区",
+        b_html: "立地適正化計画に記載された、居住誘導区域（都市の居住者の居住を誘導すべき区域）のうち、その居住誘導区域に係る居住環境向上用途施設（<span class=\"hidden-text\" onclick=\"reveal(this)\">病院</span>、<span class=\"hidden-text\" onclick=\"reveal(this)\">店舗</span>など都市の居住者の<span class=\"hidden-text\" onclick=\"reveal(this)\">日常生活に必要な施設</span>で、居住環境の向上に資するものこと）を有する建築物の建築を誘導する必要があると認められる区域に定める地区",
+        c_list: []
+    },
+    {
+        district: "特定街区",
+        b_html: "<span class=\"hidden-text\" onclick=\"reveal(this)\">市街地の整備改善</span>を図るため街区の整備または造成が行われる地区",
+        c_list: [
+            "容積率",
+            "建築物の高さの最高限度",
+            "壁面の位置の制限"
+        ]
+    },
+    {
+        district: "防火地域・準防火地域",
+        b_html: "市街地における<span class=\"hidden-text\" onclick=\"reveal(this)\">火災</span>の危険を防除するため定める地区",
+        c_list: []
+    },
+    {
+        district: "景観地区",
+        b_html: "市街地の良好な<span class=\"hidden-text\" onclick=\"reveal(this)\">景観</span>の形成を図るために定める地区",
+        c_list: []
+    },
+    {
+        district: "風致地区",
+        b_html: "都市の風致（<span class=\"hidden-text\" onclick=\"reveal(this)\">自然美</span>）を維持するために定める地区<br>☆<span class=\"hidden-text\" onclick=\"reveal(this)\">建築物の建築</span>や<span class=\"hidden-text\" onclick=\"reveal(this)\">木竹の伐採</span>等について、地方公共団体の条例で<span class=\"hidden-text\" onclick=\"reveal(this)\">必要な規制</span>をすることができる",
+        c_list: []
+    },
+    {
+        district: "特定用途制限地域",
+        b_html: "用途地域が定められていない土地の区域（<span class=\"hidden-text\" onclick=\"reveal(this)\">市街化調整区域</span> を除く）内において、良好な環境の形成・保持のために、地域の特性に応じて合理的な土地利用が行われるよう、制限すべき特定の建築物等の用途の概要を定める地域",
+        c_list: []
+    }
+];
+
+let currentMode = 1;
+let currentIndex = 0;
+let currentList = [];
+let wrongItems = [];
+
+let touchStartX = 0;
+let touchEndX = 0;
+
+function startQuiz(mode) {
+    currentMode = mode;
+    currentIndex = 0;
+    wrongItems = [];
+    
+    let baseList = [];
+    if (mode === 2) {
+        baseList = quizData.filter(item => item.c_list && item.c_list.length > 0);
+    } else {
+        baseList = quizData.filter(item => item.b_html && item.b_html.trim() !== "");
+    }
+
+    // ランダムに並び替える処理（Fisher-Yatesアルゴリズム）
+    currentList = [...baseList];
+    shuffleArray(currentList);
+
+    document.getElementById('menu-screen').style.display = 'none';
+    document.getElementById('quiz-screen').style.display = 'flex';
+    document.getElementById('result-screen').style.display = 'none';
+
+    loadCard();
+}
+
+function retryWrongItems() {
+    currentIndex = 0;
+    // 間違えた問題を再びランダムにしてセット
+    currentList = [...wrongItems];
+    shuffleArray(currentList);
+    wrongItems = [];
+
+    document.getElementById('quiz-screen').style.display = 'flex';
+    document.getElementById('result-screen').style.display = 'none';
+
+    loadCard();
+}
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+function loadCard() {
+    if (currentIndex >= currentList.length) {
+        showResult();
+        return;
+    }
+
+    const data = currentList[currentIndex];
+    document.getElementById('progress-text').textContent = `問題 ${currentIndex + 1} / ${currentList.length}`;
+    document.getElementById('card-district').textContent = data.district;
+
+    const contentArea = document.getElementById('card-content');
+    contentArea.innerHTML = '';
+
+    if (currentMode === 1) {
+        const p = document.createElement('div');
+        p.innerHTML = data.b_html;
+        contentArea.appendChild(p);
+    } else {
+        const label = document.createElement('div');
+        label.style.marginBottom = "8px";
+        label.style.fontWeight = "bold";
+        label.style.color = "#475569";
+        label.textContent = "【定める事項（タップして確認）】";
+        contentArea.appendChild(label);
+
+        data.c_list.forEach(cText => {
+            const block = document.createElement('div');
+            block.className = 'hidden-block';
+            block.textContent = cText;
+            block.onclick = function() {
+                this.classList.add('revealed');
+            };
+            contentArea.appendChild(block);
+        });
+    }
+}
+
+function reveal(element) {
+    element.classList.add('revealed');
+}
+
+function answerCard(direction) {
+    if (direction === 'left') {
+        wrongItems.push(currentList[currentIndex]);
+    }
+    currentIndex++;
+    loadCard();
+}
+
+function showResult() {
+    document.getElementById('quiz-screen').style.display = 'none';
+    const resultScreen = document.getElementById('result-screen');
+    resultScreen.style.display = 'block';
+
+    const correctCount = currentList.length - wrongItems.length;
+    const stats = document.getElementById('result-stats');
+    const retryBtn = document.getElementById('retry-btn');
+    
+    let wrongHtml = '';
+    if (wrongItems.length > 0) {
+        wrongHtml = `<br><span style="color: #dc2626; font-size: 0.95rem;">要復習の地区： ${wrongItems.map(i => i.district).join('、')}</span>`;
+        retryBtn.style.display = 'inline-block';
+    } else {
+        retryBtn.style.display = 'none';
+    }
+
+    stats.innerHTML = `
+        全 <b>${currentList.length}</b> 問終了！<br>
+        ✅ できた： <b>${correctCount}</b> 問<br>
+        ❌ できなかった： <b>${wrongItems.length}</b> 問
+        ${wrongHtml}
+    `;
+}
+
+function backToMenu() {
+    document.getElementById('menu-screen').style.display = 'flex';
+    document.getElementById('quiz-screen').style.display = 'none';
+    document.getElementById('result-screen').style.display = 'none';
+}
+
+const flashcard = document.getElementById('flashcard');
+flashcard.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+});
+flashcard.addEventListener('touchend', e => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+});
+
+function handleSwipe() {
+    const threshold = 70;
+    if (touchEndX < touchStartX - threshold) {
+        answerCard('left');
+    } else if (touchEndX > touchStartX + threshold) {
+        answerCard('right');
+    }
+}
+</script>
+
+</body>
+</html>
